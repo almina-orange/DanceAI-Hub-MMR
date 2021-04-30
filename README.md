@@ -1,4 +1,4 @@
-# MMR-Swift-Tutorial
+# DanceAI-Hub-MMR
 
 ## Note
 
