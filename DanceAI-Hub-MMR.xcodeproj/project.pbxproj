@@ -16,6 +16,9 @@
 		851B8A7E25DD26E9003BD269 /* MMR_Swift_TutorialUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851B8A7D25DD26E9003BD269 /* MMR_Swift_TutorialUITests.swift */; };
 		851B8AD225E356BA003BD269 /* CsvManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851B8AD125E356BA003BD269 /* CsvManager.swift */; };
 		8523E89D25F6EE69000C7FA3 /* FrequencyCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8523E89C25F6EE69000C7FA3 /* FrequencyCounter.swift */; };
+		85B2A874263C37A100BE1F27 /* OscMamager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B2A873263C37A100BE1F27 /* OscMamager.swift */; };
+		85B2A876263C3EB600BE1F27 /* CoreMLManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B2A875263C3EB600BE1F27 /* CoreMLManager.swift */; };
+		85B2A878263C4F1F00BE1F27 /* model_arduino_both.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 85B2A877263C4F1F00BE1F27 /* model_arduino_both.mlmodel */; };
 		CA3CEAAAD87F9C5F0A14DF7C /* Pods_DanceAI_Hub_MMR_DanceAI_Hub_MMRUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E30440AB9A5EF18DA57FEC3B /* Pods_DanceAI_Hub_MMR_DanceAI_Hub_MMRUITests.framework */; };
 		E82B45301D0EA8B811440D13 /* Pods_DanceAI_Hub_MMR.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3492DE0AEB650C8D5536959 /* Pods_DanceAI_Hub_MMR.framework */; };
 /* End PBXBuildFile section */
@@ -54,6 +57,10 @@
 		851B8A7F25DD26E9003BD269 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		851B8AD125E356BA003BD269 /* CsvManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CsvManager.swift; sourceTree = "<group>"; };
 		8523E89C25F6EE69000C7FA3 /* FrequencyCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrequencyCounter.swift; sourceTree = "<group>"; };
+		85B2A86E263C083900BE1F27 /* DanceAI-Hub-MMR.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "DanceAI-Hub-MMR.entitlements"; sourceTree = "<group>"; };
+		85B2A873263C37A100BE1F27 /* OscMamager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OscMamager.swift; sourceTree = "<group>"; };
+		85B2A875263C3EB600BE1F27 /* CoreMLManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreMLManager.swift; sourceTree = "<group>"; };
+		85B2A877263C4F1F00BE1F27 /* model_arduino_both.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = model_arduino_both.mlmodel; path = mlmodel/model_arduino_both.mlmodel; sourceTree = SOURCE_ROOT; };
 		8FACE79CE40D8D8A070E2B87 /* Pods-DanceAI-Hub-MMRTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DanceAI-Hub-MMRTests.release.xcconfig"; path = "Target Support Files/Pods-DanceAI-Hub-MMRTests/Pods-DanceAI-Hub-MMRTests.release.xcconfig"; sourceTree = "<group>"; };
 		9628A759AEBDFE5B876DDB83 /* Pods_DanceAI_Hub_MMRTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DanceAI_Hub_MMRTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3492DE0AEB650C8D5536959 /* Pods_DanceAI_Hub_MMR.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DanceAI_Hub_MMR.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +134,8 @@
 		851B8A5E25DD26E7003BD269 /* DanceAI-Hub-MMR */ = {
 			isa = PBXGroup;
 			children = (
+				85B2A877263C4F1F00BE1F27 /* model_arduino_both.mlmodel */,
+				85B2A86E263C083900BE1F27 /* DanceAI-Hub-MMR.entitlements */,
 				851B8A5F25DD26E7003BD269 /* AppDelegate.swift */,
 				851B8A6125DD26E7003BD269 /* ViewController.swift */,
 				851B8A6325DD26E9003BD269 /* Assets.xcassets */,
@@ -135,6 +144,8 @@
 				851B8A6925DD26E9003BD269 /* MMR_Swift_Tutorial.entitlements */,
 				851B8AD125E356BA003BD269 /* CsvManager.swift */,
 				8523E89C25F6EE69000C7FA3 /* FrequencyCounter.swift */,
+				85B2A873263C37A100BE1F27 /* OscMamager.swift */,
+				85B2A875263C3EB600BE1F27 /* CoreMLManager.swift */,
 			);
 			path = "DanceAI-Hub-MMR";
 			sourceTree = "<group>";
@@ -243,6 +254,11 @@
 				TargetAttributes = {
 					851B8A5B25DD26E7003BD269 = {
 						CreatedOnToolsVersion = 10.3;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 1;
+							};
+						};
 					};
 					851B8A6D25DD26E9003BD269 = {
 						CreatedOnToolsVersion = 10.3;
@@ -411,7 +427,10 @@
 				851B8A6225DD26E7003BD269 /* ViewController.swift in Sources */,
 				851B8AD225E356BA003BD269 /* CsvManager.swift in Sources */,
 				851B8A6025DD26E7003BD269 /* AppDelegate.swift in Sources */,
+				85B2A876263C3EB600BE1F27 /* CoreMLManager.swift in Sources */,
+				85B2A874263C37A100BE1F27 /* OscMamager.swift in Sources */,
 				8523E89D25F6EE69000C7FA3 /* FrequencyCounter.swift in Sources */,
+				85B2A878263C4F1F00BE1F27 /* model_arduino_both.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -578,6 +597,7 @@
 			baseConfigurationReference = A788A2060694AF3AC39A4D24 /* Pods-DanceAI-Hub-MMR.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "DanceAI-Hub-MMR/DanceAI-Hub-MMR.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "DanceAI-Hub-MMR/Info.plist";
@@ -596,6 +616,7 @@
 			baseConfigurationReference = DB90B6617DDA093D11AFE8CF /* Pods-DanceAI-Hub-MMR.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "DanceAI-Hub-MMR/DanceAI-Hub-MMR.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "DanceAI-Hub-MMR/Info.plist";

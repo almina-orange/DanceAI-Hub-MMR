@@ -16,6 +16,8 @@ import MetaWearCpp
 var vc: ViewController!
 var L_freqCounter = FrequencyCounter()
 var R_freqCounter = FrequencyCounter()
+var oscManager = OscManager()
+var coreMLManager = CoreMLManager()
 
 var L_accTextBuff: String = "" {
   didSet { DispatchQueue.main.async { vc.charaLabel.stringValue = L_accTextBuff } }
@@ -33,22 +35,22 @@ var R_gyroTextBuff: String = "" {
 var L_raw_accRecordTextBuff: String = "" {
   didSet { DispatchQueue.main.async {
     if vc.L_raw_csvMng.isRecording { vc.L_raw_csvMng.addRecordText(addText: L_raw_accRecordTextBuff) }
-  } }
+    } }
 }
 var R_raw_accRecordTextBuff: String = "" {
   didSet { DispatchQueue.main.async {
     if vc.R_raw_csvMng.isRecording { vc.R_raw_csvMng.addRecordText(addText: R_raw_accRecordTextBuff) }
-  } }
+    } }
 }
 var L_accRecordTextBuff: String = "" {
   didSet { DispatchQueue.main.async{
     if vc.L_csvMng.isRecording { vc.L_csvMng.addRecordBuffer(addText: L_accRecordTextBuff) }
-  } }
+    } }
 }
 var R_accRecordTextBuff: String = "" {
   didSet { DispatchQueue.main.async {
     if vc.R_csvMng.isRecording { vc.R_csvMng.addRecordBuffer(addText: R_accRecordTextBuff) }
-  } }
+    } }
 }
 
 var L_freqTextBuff: String = "" {
@@ -74,6 +76,30 @@ var R_freqTextBuff: String = "" {
   }
 }
 
+var L_modelInputTextBuff: String = "" {
+  didSet { DispatchQueue.main.async{
+    if coreMLManager.isDetecting {
+      coreMLManager.pushLeftData(addData: L_modelInputTextBuff)
+      coreMLManager.update()
+    }
+    } }
+}
+var R_modelInputTextBuff: String = "" {
+  didSet { DispatchQueue.main.async {
+    if coreMLManager.isDetecting {
+      coreMLManager.pushRightData(addData: R_modelInputTextBuff)
+      coreMLManager.update()
+    }
+    } }
+}
+
+var L_accOscTextBuff: String = "" {
+  didSet { DispatchQueue.main.async { oscManager.sendFloatMessage(address: "/Hub/left", arguments: L_accOscTextBuff.components(separatedBy: ",")) } }
+}
+var R_accOscTextBuff: String = "" {
+  didSet { DispatchQueue.main.async { oscManager.sendFloatMessage(address: "/Hub/right", arguments: R_accOscTextBuff.components(separatedBy: ",")) } }
+}
+
 class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSource {
   @IBOutlet weak var tableView: NSTableView!
   
@@ -94,6 +120,15 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
   
   @IBOutlet weak var filenameTextField: NSTextField!
   
+  @IBOutlet weak var modelSelectedLabel: NSTextField!
+  @IBOutlet weak var modelSelectPopUpButton: NSPopUpButton!
+  @IBOutlet weak var modelOutputLabel: NSTextField!
+  
+  @IBOutlet weak var stopThresholdLabel: NSTextField!
+  @IBOutlet weak var stopThresholdSlider: NSSlider!
+  
+  @IBOutlet weak var oscIPAddressTextField: NSTextField!
+  
   var scannerModel: ScannerModel!
   //  var L_freqCounter = FrequencyCounter()
   //  var R_freqCounter = FrequencyCounter()
@@ -105,6 +140,8 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
   let R_raw_csvMng = CsvManager()
   let L_csvMng = CsvManager()
   let R_csvMng = CsvManager()
+  
+  var oscManager_tmp = OscManager()
   
   // MARK: View Life Cycle
   override func viewDidLoad() {
@@ -128,6 +165,11 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
     self.R_raw_csvMng.setFileNameText(setText: "MMR-right-raw")
     self.L_csvMng.setFileNameText(setText: "MMR-left")
     self.R_csvMng.setFileNameText(setText: "MMR-right")
+    
+    coreMLManager.vc = self
+    
+    modelSelectedLabel.stringValue = "Model output: step detection"
+    stopThresholdLabel.stringValue = "10"
   }
   
   override func viewWillAppear() {
@@ -403,8 +445,13 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
 //          + "," + String(acceleration.x)
 //          + "," + String(acceleration.y)
 //          + "," + String(acceleration.z)
+        L_accOscTextBuff =
+          String(acceleration.x) + ","
+          + String(acceleration.y) + ","
+          + String(acceleration.z)
         L_raw_accRecordTextBuff = accRecordText
         L_accRecordTextBuff = accRecordText
+        L_modelInputTextBuff = accRecordText
         L_freqTextBuff = "---"  // just trigger
       }
       
@@ -469,8 +516,13 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
 //            + "," + String(acceleration.x)
 //            + "," + String(acceleration.y)
 //            + "," + String(acceleration.z)
+          R_accOscTextBuff =
+            String(acceleration.x) + ","
+            + String(acceleration.y) + ","
+            + String(acceleration.z)
           R_raw_accRecordTextBuff = accRecordText
           R_accRecordTextBuff = accRecordText
+          R_modelInputTextBuff = accRecordText
           R_freqTextBuff = "---"  // just trigger
         }
         
@@ -528,78 +580,33 @@ class ViewController: NSViewController, NSTableViewDelegate, NSTableViewDataSour
     }
   }
   
-  //  @IBAction func accelerometerBMI160StartStreamPressed(_ sender: Any) {
-  //    accelerometerBMI160StartStream.isEnabled = false
-  //    accelerometerBMI160StopStream.isEnabled = true
-  //    accelerometerBMI160StartLog.isEnabled = false
-  //    accelerometerBMI160StopLog.isEnabled = false
-  //    updateAccelerometerBMI160Settings()
-  //    accelerometerBMI160Data.removeAll()
-  //    let signal = mbl_mw_acc_bosch_get_acceleration_data_signal(device.board)!
-  //    mbl_mw_datasignal_subscribe(signal, bridge(obj: self)) { (context, obj) in
-  //      let acceleration: MblMwCartesianFloat = obj!.pointee.valueAs()
-  //      let _self: DeviceDetailViewController = bridge(ptr: context!)
-  //      DispatchQueue.main.async {
-  //        _self.accelerometerBMI160Graph.addX(Double(acceleration.x), y: Double(acceleration.y), z: Double(acceleration.z))
-  //      }
-  //      // Add data to data array for saving
-  //      _self.accelerometerBMI160Data.append((obj!.pointee.epoch, acceleration))
-  //    }
-  //    mbl_mw_acc_enable_acceleration_sampling(device.board)
-  //    mbl_mw_acc_start(device.board)
-  //
-  //    streamingCleanup[signal] = {
-  //      mbl_mw_acc_stop(self.device.board)
-  //      mbl_mw_acc_disable_acceleration_sampling(self.device.board)
-  //      mbl_mw_datasignal_unsubscribe(signal)
-  //    }
-  //  }
-  //
-  //  @IBAction func accelerometerBMI160StopStreamPressed(_ sender: Any) {
-  //    accelerometerBMI160StartStream.isEnabled = true
-  //    accelerometerBMI160StopStream.isEnabled = false
-  //    accelerometerBMI160StartLog.isEnabled = true
-  //    let signal = mbl_mw_acc_bosch_get_acceleration_data_signal(device.board)!
-  //    streamingCleanup.removeValue(forKey: signal)?()
-  //  }
-  //
-  //  @IBAction func gyroBMI160StartStreamPressed(_ sender: Any) {
-  //    gyroBMI160StartStream.isEnabled = false
-  //    gyroBMI160StopStream.isEnabled = true
-  //    gyroBMI160StartLog.isEnabled = false
-  //    gyroBMI160StopLog.isEnabled = false
-  //    updateGyroBMI160Settings()
-  //    gyroBMI160Data.removeAll()
-  //
-  //    let signal = mbl_mw_gyro_bmi160_get_rotation_data_signal(device.board)!
-  //    mbl_mw_datasignal_subscribe(signal, bridge(obj: self)) { (context, obj) in
-  //      let acceleration: MblMwCartesianFloat = obj!.pointee.valueAs()
-  //      let _self: DeviceDetailViewController = bridge(ptr: context!)
-  //      DispatchQueue.main.async {
-  //        // TODO: Come up with a better graph interface, we need to scale value
-  //        // to show up right
-  //        _self.gyroBMI160Graph.addX(Double(acceleration.x * 0.008), y: Double(acceleration.y * 0.008), z: Double(acceleration.z * 0.008))
-  //      }
-  //      // Add data to data array for saving
-  //      _self.gyroBMI160Data.append((obj!.pointee.epoch, acceleration))
-  //    }
-  //    mbl_mw_gyro_bmi160_enable_rotation_sampling(device.board)
-  //    mbl_mw_gyro_bmi160_start(device.board)
-  //
-  //    streamingCleanup[signal] = {
-  //      mbl_mw_gyro_bmi160_stop(self.device.board)
-  //      mbl_mw_gyro_bmi160_disable_rotation_sampling(self.device.board)
-  //      mbl_mw_datasignal_unsubscribe(signal)
-  //    }
-  //  }
-  //
-  //  @IBAction func gyroBMI160StopStreamPressed(_ sender: Any) {
-  //    gyroBMI160StartStream.isEnabled = true
-  //    gyroBMI160StopStream.isEnabled = false
-  //    gyroBMI160StartLog.isEnabled = true
-  //    let signal = mbl_mw_gyro_bmi160_get_rotation_data_signal(device.board)!
-  //    streamingCleanup.removeValue(forKey: signal)?()
-  //  }
+  @IBAction func ModelSelectPopUpButton(_ sender: Any) {
+    print(modelSelectPopUpButton.titleOfSelectedItem!)
+    modelSelectedLabel.stringValue = "Model output: " + modelSelectPopUpButton.titleOfSelectedItem!
+  }
+  
+  @IBAction func StopThresholdSlider(_ sender: Any) {
+    stopThresholdLabel.stringValue = "\(stopThresholdSlider.integerValue)"
+  }
+  
+  @IBOutlet weak var detectionToggleButton: NSButton!
+  
+  @IBAction func detectionToggleButton(_ sender: Any) {
+    if coreMLManager.isDetecting {
+      coreMLManager.isDetecting = false
+      self.detectionToggleButton.title = "off"
+    } else {
+      coreMLManager.isDetecting = true
+      coreMLManager.reset()
+      self.detectionToggleButton.title = "on"
+    }
+  }
+  
+  @IBOutlet weak var oscIPAddressSetButton: NSButton!
+  
+  @IBAction func oscIPAddressSetButton(_ sender: NSButton) {
+    oscManager.setIPAddress(IPAddress: oscIPAddressTextField.stringValue)
+  }
 }
 
 extension ViewController: ScannerModelDelegate {
