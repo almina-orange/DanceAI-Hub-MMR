@@ -1,0 +1,6 @@
+framework module Pods_DanceAI_Hub_MMR_DanceAI_Hub_MMRUITests {
+  umbrella header "Pods-DanceAI-Hub-MMR-DanceAI-Hub-MMRUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}
